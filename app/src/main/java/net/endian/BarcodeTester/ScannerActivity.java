@@ -9,6 +9,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -182,11 +185,7 @@ public class ScannerActivity extends AppCompatActivity implements GMLBarcodeRead
     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
     String imageFileName = "JPEG_" + timeStamp + "_";
     File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-    File image = File.createTempFile(
-        imageFileName,  /* prefix */
-        ".jpg",         /* suffix */
-        storageDir      /* directory */
-    );
+    File image = File.createTempFile(imageFileName, ".jpg", storageDir);
 
     // Save a file: path for use with ACTION_VIEW intents
     currentPhotoPath = image.getAbsolutePath();
@@ -210,9 +209,8 @@ public class ScannerActivity extends AppCompatActivity implements GMLBarcodeRead
       // Continue only if the File was successfully created
       if (photoFile != null) {
         Log.d("scanner","dispatch take pic " + photoFile.getName());
-        Uri photoURI = FileProvider.getUriForFile(this,
-            "net.endian.BarcodeTester.fileprovider",
-            photoFile);
+        Uri photoURI = FileProvider.getUriForFile(this, "net.endian.BarcodeTester.fileprovider", photoFile);
+
         if (photoURI != null)
         {
           Log.d("scanner", "dispatch take pic uri " + photoURI.getEncodedPath());
@@ -314,6 +312,7 @@ public class ScannerActivity extends AppCompatActivity implements GMLBarcodeRead
 
       if (bitmap  != null)
       {
+        Log.d("scanner", "bitmap " + bitmap.getWidth() + "x" + bitmap.getHeight());
         barcodeReader.AnalyzeImage(bitmap, 11);
         imageView.setImageBitmap(bitmap);
       } else
@@ -362,9 +361,32 @@ public class ScannerActivity extends AppCompatActivity implements GMLBarcodeRead
 
     if (barcodes != null)
     {
+      Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+
+      ImageView baseImage = (ImageView) this.findViewById(R.id.imageView);
+
+      Bitmap bitmap2 = bitmap.copy(Bitmap.Config.ARGB_8888,  true);
+
+      Canvas canvas = new Canvas(bitmap2);
+      baseImage.setImageBitmap(bitmap2);
+
+      Paint rectColor = new Paint();
+      rectColor.setColor(Color.BLUE);
+      rectColor.setStyle(Paint.Style.STROKE);
+      rectColor.setStrokeWidth(10);
+
+      Paint textColor = new Paint();
+      textColor.setColor(Color.BLACK);
+      textColor.setTextSize(textColor.getTextSize() * 20);
+
       for (GMLBarcodeReader.BarcodeResult barcode : barcodes)
       {
-        Log.d("scanner", "results received " + barcode.BoundingBox + " " + barcode.Type + " " + barcode.Content);
+        Log.d("scanner", "results received " +
+            barcode.ImageSize.x + "x" + barcode.ImageSize.y + " " +
+            barcode.BoundingBox + " " + barcode.Type + " " + barcode.Content);
+
+        canvas.drawRect(barcode.BoundingBox, rectColor);
+        canvas.drawText(barcode.Content, barcode.BoundingBox.left, barcode.BoundingBox.bottom + textColor.getTextSize(), textColor);
       }
     }
   }

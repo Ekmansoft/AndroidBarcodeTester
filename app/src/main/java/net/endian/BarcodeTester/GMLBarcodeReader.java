@@ -2,6 +2,7 @@ package net.endian.BarcodeTester;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.Log;
 
@@ -39,6 +40,7 @@ public class GMLBarcodeReader
   {
     public String Content;
     public Rect BoundingBox;
+    public Point ImageSize;
     public String Type;
   }
 
@@ -91,7 +93,7 @@ public class GMLBarcodeReader
     }
   }
 
-  public void AnalyzeImage(Bitmap bitmap, final int reference)
+  public void AnalyzeImage(final Bitmap bitmap, final int reference)
   {
     FirebaseVisionImage fbImage = FirebaseVisionImage.fromBitmap(bitmap);
     Task<List<FirebaseVisionBarcode>> task =  detector.detectInImage(fbImage);
@@ -110,6 +112,7 @@ public class GMLBarcodeReader
             BarcodeResult result = new BarcodeResult();
             result.Content = barcode.getDisplayValue();
             result.BoundingBox = barcode.getBoundingBox();
+            result.ImageSize = new Point(bitmap.getWidth(), bitmap.getHeight());
 
             Log.d("scanner", "barcode " + barcode.getRawValue() + " " +
                 barcode.getDisplayValue() + " " +
